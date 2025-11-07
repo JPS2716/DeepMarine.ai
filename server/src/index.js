@@ -22,15 +22,35 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true); // non-browser clients
-      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      // allow any localhost in dev (more permissive)
+      
+      // Check allowed origins from env
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow localhost in development
       if (/^http:\/\/localhost:\d+$/.test(origin)) {
         // eslint-disable-next-line no-console
         console.log("CORS: Allowing localhost origin:", origin);
         return callback(null, true);
       }
+      
+      // Allow Vercel domains (for production)
+      if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+        // eslint-disable-next-line no-console
+        console.log("CORS: Allowing Vercel origin:", origin);
+        return callback(null, true);
+      }
+      
+      // Allow any https origin in production if explicitly enabled
+      if (process.env.CORS_ALLOW_ALL === "true" && /^https:\/\//.test(origin)) {
+        // eslint-disable-next-line no-console
+        console.log("CORS: Allowing all HTTPS origin:", origin);
+        return callback(null, true);
+      }
+      
       // eslint-disable-next-line no-console
-      console.warn("CORS: Blocked origin:", origin);
+      console.warn("CORS: Blocked origin:", origin, "Allowed:", ALLOWED_ORIGINS);
       return callback(new Error(`CORS blocked for origin ${origin}`));
     },
     credentials: true,
