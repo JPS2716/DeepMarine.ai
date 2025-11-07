@@ -87,30 +87,36 @@ app.post("/detect", upload.single("file"), async (req, res) => {
   }
 });
 
-function startServer(desiredPort, attemptsLeft = 20) {
-  const server = app
-    .listen(desiredPort, () => {
-      // eslint-disable-next-line no-console
-      console.log(`✅ Server running on port ${desiredPort}`);
-      // eslint-disable-next-line no-console
-      console.log("CORS allowed origins:", ALLOWED_ORIGINS.join(", "));
-    })
-    .on("error", (err) => {
-      if (err && err.code === "EADDRINUSE" && attemptsLeft > 0) {
-        const nextPort = desiredPort + 1;
-        // eslint-disable-next-line no-console
-        console.warn(
-          `⚠️ Port ${desiredPort} in use, switched to ${nextPort} instead.`
-        );
-        startServer(nextPort, attemptsLeft - 1);
-      } else {
-        // eslint-disable-next-line no-console
-        console.error("❌ Failed to start server:", err);
-        process.exit(1);
-      }
-    });
+// Export for Vercel serverless functions
+module.exports = app;
 
-  return server;
+// Only start server if not in Vercel environment
+if (process.env.VERCEL !== "1" && !process.env.VERCEL_ENV) {
+  function startServer(desiredPort, attemptsLeft = 20) {
+    const server = app
+      .listen(desiredPort, () => {
+        // eslint-disable-next-line no-console
+        console.log(`✅ Server running on port ${desiredPort}`);
+        // eslint-disable-next-line no-console
+        console.log("CORS allowed origins:", ALLOWED_ORIGINS.join(", "));
+      })
+      .on("error", (err) => {
+        if (err && err.code === "EADDRINUSE" && attemptsLeft > 0) {
+          const nextPort = desiredPort + 1;
+          // eslint-disable-next-line no-console
+          console.warn(
+            `⚠️ Port ${desiredPort} in use, switched to ${nextPort} instead.`
+          );
+          startServer(nextPort, attemptsLeft - 1);
+        } else {
+          // eslint-disable-next-line no-console
+          console.error("❌ Failed to start server:", err);
+          process.exit(1);
+        }
+      });
+
+    return server;
+  }
+
+  startServer(PORT);
 }
-
-startServer(PORT);
