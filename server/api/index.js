@@ -3,7 +3,6 @@
 const app = require('../src/index');
 
 // Export as Vercel serverless function handler
-module.exports = (req, res) => {
-  return app(req, res);
-};
+// Vercel expects a function that receives (req, res)
+module.exports = app;
 
